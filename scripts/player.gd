@@ -1,6 +1,11 @@
 class_name Player
 extends CharacterBody2D
 
+enum Direction {
+	LEFT = -1,
+	RIGHT = 1,
+}
+
 enum State {
 	IDLE,
 	RUNNING,
@@ -36,8 +41,17 @@ var is_first_tick := false
 var is_combo_request := false
 var pending_damage: Damage
 var fall_from_y: float
+var interacting_with: Array[Interactable]
 
 @export var can_combo := false
+@export var direction := Direction.RIGHT:
+	set(v):
+		direction = v
+
+		if not is_node_ready():
+			await ready
+
+		graphics.scale.x = direction
 
 @onready var graphics: Node2D = $Graphics
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
@@ -47,8 +61,9 @@ var fall_from_y: float
 @onready var jump_requst_timer: Timer = $Timer/JumpRequstTimer
 @onready var invincible_timer: Timer = $Timer/InvincibleTimer
 @onready var state_machine: StateMachine = $StateMachine
-@onready var status: Status = $Status
+@onready var status: Status = Game.player_status
 @onready var slide_request_timer: Timer = $Timer/SlideRequestTimer
+@onready var interaction_icon: AnimatedSprite2D = $InteractionIcon
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -66,6 +81,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("attack") and can_combo:
 		is_combo_request = true
 
+	if event.is_action_pressed("interact") and interacting_with:
+		interacting_with.back().interact()
+
 
 func _on_hurtbox_hurt(hitbox: Hitbox) -> void:
 	if invincible_timer.time_left > 0:
@@ -77,14 +95,14 @@ func _on_hurtbox_hurt(hitbox: Hitbox) -> void:
 
 
 func move(gravity: float, delta: float):
-	var direction := Input.get_axis("move_left", "move_right")
+	var movement := Input.get_axis("move_left", "move_right")
 
 	var acceleration := FLOOR_ACCELERATION if is_on_floor() else AIR_ACCELERATION
-	velocity.x = move_toward(velocity.x, direction * RUN_SPEED, acceleration * delta)
+	velocity.x = move_toward(velocity.x, movement * RUN_SPEED, acceleration * delta)
 	velocity.y += gravity * delta
 
-	if not is_zero_approx(direction):
-		graphics.scale.x = -1 if direction < 0 else 1
+	if not is_zero_approx(movement):
+		direction = Direction.LEFT if movement < 0 else Direction.RIGHT
 
 	move_and_slide()
 
@@ -106,6 +124,21 @@ func silde(delta: float) -> void:
 
 func die() -> void:
 	get_tree().reload_current_scene()
+	Game.player_status.health = 3
+
+
+func register_interactable(v: Interactable) -> void:
+	if state_machine.current_state == State.DYING:
+		return
+
+	if v in interacting_with:
+		return
+
+	interacting_with.append(v)
+
+
+func unregister_interactable(v: Interactable) -> void:
+	interacting_with.erase(v)
 
 
 func can_wall_slide() -> bool:
@@ -123,6 +156,8 @@ func should_slide() -> bool:
 
 
 func tick_physics(state: State, delta: float) -> void:
+	interaction_icon.visible = not interacting_with.is_empty()
+
 	if invincible_timer.time_left > 0:
 		graphics.modulate.a = sin(Time.get_ticks_msec() / 32) * 0.5 + 0.5
 	else:
@@ -187,8 +222,8 @@ func get_next_state(state: State) -> int:
 	if state in GROUND_STATES and not is_on_floor():
 		return State.FALL
 
-	var direction := Input.get_axis("move_left", "move_right")
-	var is_still := is_zero_approx(direction) and is_zero_approx(velocity.x)
+	var movement := Input.get_axis("move_left", "move_right")
+	var is_still := is_zero_approx(movement) and is_zero_approx(velocity.x)
 
 	match state:
 		State.IDLE:
@@ -351,6 +386,7 @@ func transition_state(from: State, to: State) -> void:
 		State.DYING:
 			animation_player.play("dying")
 			invincible_timer.stop()
+			interacting_with.clear()
 
 		State.SLIDING_START:
 			animation_player.play("sliding_start")

@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3 uid="uid://dp2ulcsd0lni3"]
 
-[ext_resource type="Script" uid="uid://duh123i8id4ya" path="res://scripts/status_panel.gd" id="1_0jk47"]
+[ext_resource type="Script" uid="uid://duh123i8id4ya" path="res://ui/status_panel.gd" id="1_0jk47"]
 [ext_resource type="Texture2D" uid="uid://ca6bgwxxuo1n2" path="res://assets/Legacy-Fantasy - High Forest 2.3/HUD/Base-01.png" id="1_3plgq"]
 [ext_resource type="Texture2D" uid="uid://drfubxwfjk3yf" path="res://assets/generic_char_v0.2/png/blue/char_blue.png" id="2_0jk47"]
 
