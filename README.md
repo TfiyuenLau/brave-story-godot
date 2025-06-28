@@ -5,14 +5,14 @@
 
 ## Ⅱ、项目结构
 ~~~bash
+├── addons/           # Godot插件（Animation Resetter、Simple Format On Save等）
 ├── assets/           # 素材资源（角色、环境、UI等）
+├── classes/          # 通用类与交互（teleporter.gd、entry_point.gd等）
+├── globals/          # 全局脚本与配置（game.gd等）
 ├── scenes/           # 游戏场景（player、enemy、boar、mine_gate等）
 ├── scripts/          # 主要脚本（player.gd、enemy.gd、boar.gd、world.gd等）
 ├── ui/               # UI相关资源（status_panel等）
 ├── worlds/           # 世界/关卡场景（cave.tscn、forest.tscn等）
-├── globals/          # 全局脚本与配置（game.gd等）
-├── classes/          # 通用类与交互（teleporter.gd、entry_point.gd等）
-├── addons/           # Godot插件
 ├── project.godot     # Godot项目主配置文件
 └── README.md         # 项目说明文档
 ~~~
